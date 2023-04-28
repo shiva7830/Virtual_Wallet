@@ -15,6 +15,56 @@ from wallet.models import Wallet
 # wallets are owned by users.
 wallet = user.wallet_set.create()
 ```
+### Implement the user registration and login functionality
+
+  from django.shortcuts import render, redirect
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login, authenticate
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            is_premium = request.POST.get('is_premium')
+            if is_premium:
+                wallet = Wallet(user=user, balance=2500.00, is_premium=True)
+            else:
+                wallet = Wallet(user=user, balance=1000.00)
+            wallet.save()
+            login(request, user)
+            return redirect('dashboard')
+    else:
+        form = UserCreationForm()
+    return render(request, 'registration/register.html', {'form': form})
+    
+### For sending and receiving money, We'll need to implement views for handling transactions. 
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Wallet
+
+@login_required
+def send_money(request):
+    sender_wallet = Wallet.objects.get(user=request.user)
+    receiver_id = request.POST.get('receiver_id')
+    amount = request.POST.get('amount')
+    receiver_wallet = Wallet.objects.get(id=receiver_id)
+    if sender_wallet.balance < amount:
+        messages.error(request, 'Insufficient funds')
+        return redirect('dashboard')
+    transaction_charge = amount * 0.02
+    sender_wallet.balance -= amount + transaction_charge
+    receiver_wallet.balance += amount
+    superuser_wallet = Wallet.objects.get(user__is_superuser=True)
+    superuser_wallet.balance += transaction_charge
+    sender_wallet.save()
+    receiver_wallet.save()
+    superuser_wallet.save()
+    messages.success(request, f'{amount} INR sent to {receiver_wallet.user.username}')
+    return redirect('dashboard')
+
 
 ### Despositing a balance to a wallet
 
