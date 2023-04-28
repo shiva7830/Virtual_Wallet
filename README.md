@@ -1,4 +1,4 @@
-django-pursed
+Virtual-Wallet using Django
 ===
 
 A simple wallet django app.
