@@ -2,6 +2,15 @@ Virtual-Wallet using Django
 ===
 
 A simple wallet django app.
+### First, We need to set up your Django project and create the necessary models for the wallet and users.
+from django.db import models
+from django.contrib.auth.models import User
+
+class Wallet(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    is_premium = models.BooleanField(default=False)
+
 
 ### Creating a New Wallet
 
